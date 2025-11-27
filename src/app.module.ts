@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [
     ConfigModule.forRoot(),
+
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -15,8 +16,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
-      synchronize: true, // SOLO EN DESARROLLO
-    })
+      synchronize: true,
+      ssl: process.env.STAGE === 'prod' ? true : false,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
