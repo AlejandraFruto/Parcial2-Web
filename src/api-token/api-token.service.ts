@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,10 +15,11 @@ export class ApiTokenService {
   constructor(
     @InjectRepository(ApiToken)
     private readonly tokenRepository: Repository<ApiToken>,
+    private readonly apiTokenService: ApiTokenService,
   ) {}
 
   async create(dto: CreateApiTokenDto) {
-    const randomToken = randomBytes(32).toString('hex'); // genera token único
+    const randomToken = randomBytes(32).toString('hex');
 
     const token = this.tokenRepository.create({
       token: randomToken,
@@ -43,12 +45,12 @@ export class ApiTokenService {
       throw new BadRequestException('El token no tiene peticiones disponibles');
     }
 
-    token.reqLeft -= 1;
-
-    if (token.reqLeft === 0) {
-      token.active = false;
+    try {
+      await this.apiTokenService.reduce(token.id);
+    } catch {
+      throw new UnauthorizedException('Token expirado o inactivo');
     }
 
-    return this.tokenRepository.save(token);
+    return true;
   }
 }
