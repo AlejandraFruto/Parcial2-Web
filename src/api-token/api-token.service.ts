@@ -16,9 +16,6 @@ export class ApiTokenService {
     private readonly tokenRepository: Repository<ApiToken>,
   ) {}
 
-  // -------------------------
-  // CREATE TOKEN
-  // -------------------------
   async create(dto: CreateApiTokenDto) {
     const randomToken = randomBytes(32).toString('hex');
 
@@ -31,9 +28,6 @@ export class ApiTokenService {
     return this.tokenRepository.save(token);
   }
 
-  // -------------------------
-  // FIND BY TOKEN STRING
-  // -------------------------
   async findByToken(tokenStr: string) {
     const token = await this.tokenRepository.findOne({
       where: { token: tokenStr },
@@ -46,9 +40,6 @@ export class ApiTokenService {
     return token;
   }
 
-  // -------------------------
-  // REDUCE TOKEN
-  // -------------------------
   async reduce(id: string) {
     const token = await this.tokenRepository.findOne({ where: { id } });
 
