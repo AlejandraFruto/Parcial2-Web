@@ -3,6 +3,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CharacterModule } from './character/character.module';
+import { LocationModule } from './location/location.module';
+import { ApiTokenModule } from './api-token/api-token.module';
 
 @Module({
   imports: [
@@ -19,6 +22,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       synchronize: true,
       ssl: process.env.STAGE === 'prod' ? true : false,
     }),
+
+    CharacterModule,
+
+    LocationModule,
+
+    ApiTokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],
