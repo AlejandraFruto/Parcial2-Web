@@ -1,26 +1,92 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import { Character } from './entities/character.entity';
+import { Location } from '../location/entities/location.entity';
 import { CreateCharacterDto } from './dto/create-character.dto';
-import { UpdateCharacterDto } from './dto/update-character.dto';
 
 @Injectable()
 export class CharacterService {
-  create(createCharacterDto: CreateCharacterDto) {
-    return 'This action adds a new character';
+  constructor(
+    @InjectRepository(Character)
+    private readonly characterRepo: Repository<Character>,
+
+    @InjectRepository(Location)
+    private readonly locationRepo: Repository<Location>,
+  ) {}
+
+  async create(dto: CreateCharacterDto) {
+    const character = this.characterRepo.create({
+      name: dto.name,
+      salary: dto.salary,
+      employee: dto.employee,
+    });
+
+    if (dto.property) {
+      const property = await this.locationRepo.findOne({
+        where: { id: dto.property },
+      });
+      if (!property) throw new NotFoundException('La propiedad no existe');
+
+      if (property.owner)
+        throw new BadRequestException('Esta locación ya tiene dueño');
+
+      character.property = property;
+      property.owner = character;
+      await this.locationRepo.save(property);
+    }
+
+    if (dto.favPlaces && dto.favPlaces.length > 0) {
+      const places = await this.locationRepo.findByIds(dto.favPlaces);
+
+      if (places.length !== dto.favPlaces.length)
+        throw new NotFoundException('Una locación de favoritos no existe');
+
+      character.favPlaces = places;
+    }
+
+    return this.characterRepo.save(character);
   }
 
-  findAll() {
-    return `This action returns all character`;
+  async addFavorite(characterId: number, locationId: number) {
+    const character = await this.characterRepo.findOne({
+      where: { id: characterId },
+      relations: ['favPlaces'],
+    });
+    if (!character) throw new NotFoundException('Personaje no existe');
+
+    const location = await this.locationRepo.findOne({
+      where: { id: locationId },
+    });
+    if (!location) throw new NotFoundException('La locación no existe');
+
+    character.favPlaces.push(location);
+
+    return this.characterRepo.save(character);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} character`;
-  }
+  async calculateTaxes(id: number) {
+    const character = await this.characterRepo.findOne({
+      where: { id },
+      relations: ['property'],
+    });
 
-  update(id: number, updateCharacterDto: UpdateCharacterDto) {
-    return `This action updates a #${id} character`;
-  }
+    if (!character) throw new NotFoundException('Personaje no existe');
 
-  remove(id: number) {
-    return `This action removes a #${id} character`;
+    if (!character.property) {
+      return { taxDebt: 0 };
+    }
+
+    const coef = character.employee ? 0.08 : 0.03;
+    const locationCost = character.property.cost;
+
+    const tax = locationCost * (1 + coef);
+
+    return { taxDebt: tax };
   }
 }

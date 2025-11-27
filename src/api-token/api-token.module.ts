@@ -8,5 +8,6 @@ import { ApiToken } from './entities/api-token.entity';
   imports: [TypeOrmModule.forFeature([ApiToken])],
   controllers: [ApiTokenController],
   providers: [ApiTokenService],
+  exports: [ApiTokenService],
 })
 export class ApiTokenModule {}

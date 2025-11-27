@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,9 +14,11 @@ export class ApiTokenService {
   constructor(
     @InjectRepository(ApiToken)
     private readonly tokenRepository: Repository<ApiToken>,
-    private readonly apiTokenService: ApiTokenService,
   ) {}
 
+  // -------------------------
+  // CREATE TOKEN
+  // -------------------------
   async create(dto: CreateApiTokenDto) {
     const randomToken = randomBytes(32).toString('hex');
 
@@ -30,27 +31,41 @@ export class ApiTokenService {
     return this.tokenRepository.save(token);
   }
 
-  async isValid(id: string) {
-    const token = await this.tokenRepository.findOne({ where: { id } });
-    if (!token) throw new NotFoundException('Token no existe');
+  // -------------------------
+  // FIND BY TOKEN STRING
+  // -------------------------
+  async findByToken(tokenStr: string) {
+    const token = await this.tokenRepository.findOne({
+      where: { token: tokenStr },
+    });
 
-    return token.active && token.reqLeft > 0;
+    if (!token) {
+      throw new NotFoundException('Token no existe');
+    }
+
+    return token;
   }
 
+  // -------------------------
+  // REDUCE TOKEN
+  // -------------------------
   async reduce(id: string) {
     const token = await this.tokenRepository.findOne({ where: { id } });
-    if (!token) throw new NotFoundException('Token no existe');
+
+    if (!token) {
+      throw new NotFoundException('Token no existe');
+    }
 
     if (!token.active || token.reqLeft <= 0) {
       throw new BadRequestException('El token no tiene peticiones disponibles');
     }
 
-    try {
-      await this.apiTokenService.reduce(token.id);
-    } catch {
-      throw new UnauthorizedException('Token expirado o inactivo');
+    token.reqLeft -= 1;
+
+    if (token.reqLeft === 0) {
+      token.active = false;
     }
 
-    return true;
+    return this.tokenRepository.save(token);
   }
 }
