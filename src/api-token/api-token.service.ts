@@ -16,10 +16,18 @@ export class ApiTokenService {
   ) {}
 
   async create(dto: CreateApiTokenDto) {
+    const tokenExists = await this.tokenRepository.findOne({
+      where: { token: dto.token },
+    });
+
+    if (tokenExists) {
+      throw new BadRequestException('Ese token ya existe');
+    }
+
     const token = this.tokenRepository.create({
       token: dto.token,
       reqLeft: dto.reqLeft ?? 10,
-      active: true,
+      active: dto.active ?? true,
     });
 
     return this.tokenRepository.save(token);

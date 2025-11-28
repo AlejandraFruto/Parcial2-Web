@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  IsBoolean,
-  IsOptional,
-  IsArray,
-} from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateCharacterDto {
   @IsString()
@@ -21,7 +15,6 @@ export class CreateCharacterDto {
   property?: number;
 
   @IsOptional()
-  @IsArray()
   @IsNumber({}, { each: true })
   favPlaces?: number[];
 }

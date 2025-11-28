@@ -2,7 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
+  OneToOne,
   ManyToMany,
 } from 'typeorm';
 import { Character } from '../../character/entities/character.entity';
@@ -21,7 +21,7 @@ export class Location {
   @Column({ type: 'int' })
   cost: number;
 
-  @ManyToOne(() => Character, (char) => char.property, { nullable: true })
+  @OneToOne(() => Character, (char) => char.property)
   owner: Character;
 
   @ManyToMany(() => Character, (char) => char.favPlaces)

@@ -1,4 +1,10 @@
-import { IsNumber, IsOptional, Min, IsString } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  Min,
+  IsString,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateApiTokenDto {
   @IsString()
@@ -8,4 +14,8 @@ export class CreateApiTokenDto {
   @IsNumber()
   @Min(1)
   reqLeft?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean;
 }

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
+import { In } from 'typeorm';
 import { Location } from './entities/location.entity';
 import { Character } from '../character/entities/character.entity';
 import { CreateLocationDto } from './dto/create-location.dto';
@@ -33,30 +33,36 @@ export class LocationService {
         relations: ['property'],
       });
 
-      if (!owner) {
-        throw new NotFoundException('El dueño no existe');
-      }
-
-      if (owner.property) {
+      if (!owner) throw new NotFoundException('El dueño no existe');
+      if (owner.property)
         throw new BadRequestException('Este personaje ya posee una propiedad');
-      }
 
       location.owner = owner;
     }
 
-    if (dto.favCharacters && dto.favCharacters.length > 0) {
-      const characters = await this.characterRepo.findByIds(dto.favCharacters);
+    if (dto.favCharacters?.length) {
+      const chars = await this.characterRepo.find({
+        where: { id: In(dto.favCharacters) },
+      });
 
-      if (characters.length !== dto.favCharacters.length) {
+      if (chars.length !== dto.favCharacters.length)
         throw new NotFoundException(
           'Uno o más personajes favoritos no existen',
         );
-      }
 
-      location.favCharacters = characters;
+      location.favCharacters = chars;
     }
 
-    return this.locationRepo.save(location);
+    const saved = await this.locationRepo.save(location);
+
+    return {
+      id: saved.id,
+      name: saved.name,
+      type: saved.type,
+      cost: saved.cost,
+      owner: saved.owner?.id ?? null,
+      favCharacters: saved.favCharacters?.map((c) => c.id) ?? [],
+    };
   }
 
   async findAllWithFavVisitors() {

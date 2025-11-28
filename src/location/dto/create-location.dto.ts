@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsArray } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateLocationDto {
   @IsString()
@@ -10,12 +10,10 @@ export class CreateLocationDto {
   @IsNumber()
   cost: number;
 
-  @IsOptional()
   @IsNumber()
-  owner?: number;
+  owner: number;
 
   @IsOptional()
-  @IsArray()
   @IsNumber({}, { each: true })
   favCharacters?: number[];
 }
